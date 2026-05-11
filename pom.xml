@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.4.5</version>
+    <relativePath/> <!-- lookup parent from repository -->
+  </parent>
+  <groupId>com.sea.star.ai.ec</groupId>
+  <artifactId>sea_star_enterprise_connector</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>sea_star_enterprise_connector</name>
+  <description>sea_star_enterprise_connector</description>
+  <url/>
+  <licenses>
+    <license/>
+  </licenses>
+  <developers>
+    <developer/>
+  </developers>
+  <scm>
+    <connection/>
+    <developerConnection/>
+    <tag/>
+    <url/>
+  </scm>
+  <properties>
+    <java.version>21</java.version>
+    <jsqlparser.version>5.1</jsqlparser.version>
+    <springdoc.version>2.8.4</springdoc.version>
+    <mybatis-flex.version>1.11.6</mybatis-flex.version>
+    <lombok.version>1.18.36</lombok.version>
+    <resilience4j.version>2.3.0</resilience4j.version>
+    <spring-ai.version>1.1.4</spring-ai.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-bom</artifactId>
+        <version>${spring-ai.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+    <!-- MyBatis-Flex: 原生复合主键, APT 类型安全查询, 活跃社区维护 -->
+    <dependency>
+      <groupId>com.mybatis-flex</groupId>
+      <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
+      <version>${mybatis-flex.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- 多方言 JDBC 驱动: 版本由 Spring Boot BOM 管理. HikariCP 反射加载, 编译期不依赖,
+         所以 scope=runtime. Oracle 驱动 (ojdbc11) 不加: 包 ~7MB + 容器镜像 ~2GB 性价比低,
+         真接 Oracle 客户时再补 pom. 提前写入 ORACLE 模板 → HikariCP 建池 ClassNotFoundException. -->
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.jsqlparser</groupId>
+      <artifactId>jsqlparser</artifactId>
+      <version>${jsqlparser.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-spring-boot3</artifactId>
+      <version>${resilience4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-ratelimiter</artifactId>
+      <version>${resilience4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-circuitbreaker</artifactId>
+      <version>${resilience4j.version}</version>
+    </dependency>
+
+    <!-- Spring AI MCP Server: 标准 MCP 协议 (streamable-http/SSE) 实现, 版本由 spring-ai-bom 管理 -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+    </dependency>
+
+    <!-- JSON 结构化日志 (Phase 5.1): 生产 profile 下输出 JSON, 方便 ELK / Loki 采集 -->
+    <dependency>
+      <groupId>net.logstash.logback</groupId>
+      <artifactId>logstash-logback-encoder</artifactId>
+      <version>8.0</version>
+    </dependency>
+
+    <!-- Prometheus 指标导出 (Phase 5.3): actuator + micrometer-prometheus 自动暴露 /actuator/prometheus;
+         Resilience4j 的 rate-limiter / circuit-breaker 指标也会自动注册 -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!--
+      Integration tests (Phase 5.5): Testcontainers PG + Redis, Spring Boot 集成支持。
+      显式用 1.21.3 替换 Spring Boot BOM 默认版 (1.20.6)。
+      原因: 1.20.6 捆绑的 docker-java 3.4.x 跟 Docker Desktop 4.70 的 TCP/npipe 交互有兼容性 bug,
+      InfoCmd 返回 CLI-handshake stub 而不是真实响应; 1.21.x 升到更新的 docker-java 通常已修复。
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-testcontainers</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>1.21.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>1.21.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>mysql</artifactId>
+      <version>1.21.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>mssqlserver</artifactId>
+      <version>1.21.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.21.3</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- redis 没有专用 module, 用通用 GenericContainer + redis:alpine 镜像 -->
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <!--
+        Windows Docker Desktop 的 npipe 默认名字是 dockerDesktopLinuxEngine (跟随 `docker context ls`),
+        Testcontainers 自动探测找不到, 所以显式把 docker.host 传给 forked JVM。
+        Linux / macOS 上 docker.host 会覆盖默认 unix socket, 可通过 -Ddocker.host=... 覆盖或
+        直接用 -Dskip.it=true 跳过 IT 测试 (本项目没单独区分 UT/IT, 只能用 -Dtest=...)。
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!--
+            Testcontainers 的 EnvironmentAndSystemPropertyClientProviderStrategy 同时读:
+              1. System.getenv("DOCKER_HOST")       (shell env, Surefire fork 不继承)
+              2. System.getProperty("DOCKER_HOST")  (-D 系统属性, 可控)
+            下面两条都写: environmentVariables 让 Linux/macOS 也能工作;
+            systemPropertyVariables 是 Windows Docker Desktop TCP (2375) 模式下的兜底。
+          -->
+          <environmentVariables>
+            <DOCKER_HOST>${env.DOCKER_HOST}</DOCKER_HOST>
+          </environmentVariables>
+          <systemPropertyVariables>
+            <DOCKER_HOST>${env.DOCKER_HOST}</DOCKER_HOST>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <!--
+        注解处理器顺序严格: Lombok 必须在 mybatis-flex-processor 之前,
+        否则 Flex APT 看不到 Lombok 生成的 getter/setter,
+        生成的 TableDef 字段为空。
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+            <path>
+              <groupId>com.mybatis-flex</groupId>
+              <artifactId>mybatis-flex-processor</artifactId>
+              <version>${mybatis-flex.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

@@ -1,0 +1,35 @@
+# =============================================================================
+# 集成测试 Profile (Testcontainers)
+# spring.datasource.url / spring.data.redis.host 由 AbstractIntegrationTest 的
+# @DynamicPropertySource 覆盖为容器实际分配的端口。
+# =============================================================================
+server:
+  port: 0                 # 随机端口, 避免并行测试端口冲突
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 10000
+  data:
+    redis:
+      timeout: 3000
+
+# 用本地 dev 占位 key, 仅用于通过 EncryptionUtils 启动 fail-fast 校验
+connector:
+  security:
+    mcp-token: integration-test-mcp-token-0123456789
+    admin-api-key: integration-test-admin-key-0123456789
+    admin-purge-api-key: integration-test-purge-key-0123456789
+    encryption-key: ETr+rhWk4uO4f3eqZjZEv69ZUyXOq4tIsUeHxIK3q9E=
+  async:
+    callback:
+      inbound-secret: integration-test-callback-secret
+
+logging:
+  level:
+    root: WARN
+    com.sea.star.ai.ec.enterprise.connector: INFO
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN

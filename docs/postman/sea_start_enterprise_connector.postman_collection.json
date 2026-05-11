@@ -1,0 +1,565 @@
+{
+  "info": {
+    "_postman_id": "8be8b369-9c21-4d99-a939-0af87b3b80a0",
+    "name": "sea_start_enterprise_connector",
+    "description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "19367807"
+  },
+  "item": [
+    {
+      "name": "create_tenant",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{adminApiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"tenantName\": \"商户 A\",\n  \"tier\": \"PREMIUM\",\n  \"rateLimitQps\": 10\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/admin/tenants/merchant_a",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "admin",
+            "tenants",
+            "merchant_a"
+          ]
+        },
+        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+      },
+      "response": []
+    },
+    {
+      "name": "create_datasources",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{adminApiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "// {\r\n//   \"accessType\": \"POSTGRES\",\r\n//   \"dbUrl\": \"jdbc:postgresql://localhost:5432/merchant_a_db\",\r\n//   \"dbUsername\": \"connector_readonly\",\r\n//   \"dbPassword\": \"123456\"\r\n// }\r\n\r\n{\r\n  \"accessType\": \"API\",\r\n  \"dbUrl\": \"\",\r\n  \"dbUsername\": \"\",\r\n\r\n  \"apiBaseUrl\": \"http://192.168.80.16:8080\",\r\n  \"apiAuthType\": \"\",\r\n  \"apiToken\": \"\",\r\n  \"apiHeaders\": null\r\n\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/admin/datasources/{{tenantId}}/api_basic",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "admin",
+            "datasources",
+            "{{tenantId}}",
+            "api_basic"
+          ]
+        },
+        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+      },
+      "response": []
+    },
+    {
+      "name": "create_template",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Successful PUT request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{adminApiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "// {\n//   \"action\": \"queryOrder\",\n//   \"accessType\": \"POSTGRES\",\n//   \"name\": \"查询订单\",\n//   \"description\": \"根据订单号或用户 ID 查询订单。支持状态过滤。\",\n//   \"datasourceName\": \"default\",\n//   \"sqlTemplate\": \"SELECT order_id, user_id, amount, status, created_at FROM orders WHERE (:orderId IS NULL OR order_id = :orderId) AND (:userId IS NULL OR user_id = :userId) AND (:status IS NULL OR status = :status) ORDER BY created_at DESC\",\n//   \"paramSchema\": \"{\"orderId\":{\"type\":\"string\",\"maxLength\":32,\"pattern\":\"^[A-Z0-9]+$\",\"description\":\"订单号\"},\"userId\":{\"type\":\"string\",\"maxLength\":32,\"description\":\"用户 ID\"},\"status\":{\"type\":\"string\",\"maxLength\":20,\"description\":\"订单状态 PAID/REFUNDED/PENDING\"}}\",\n//   \"maxRows\": 100,\n//   \"isLongRunning\": false,\n//   \"timeoutSeconds\": 5\n// }\n\n\n\n{\n  \"action\": \"getTimeOff\",\n  \"accessType\": \"API\",\n  \"name\": \"查询请假信息\",\n  \"description\": \"根据日期期间查询请假信息。\",\n  \"datasourceName\": \"\",\n  \"sqlTemplate\": \"\",\n  \"apiPath\":\"/uq/us/api/admin-secureforms/en/agent/workforce/timeoff/admin/query?startDate={startDate}&endDate={endDate}\",\n  \"apiMethod\":\"GET\",\n\n  \"apiBodyTemplate\": \"{\\\"startDate\\\":\\\"{{startDate}}\\\",\\\"endDate\\\":\\\"{{endDate}}\\\"}\",\n  \"paramSchema\": \"{\\\"startDate\\\": {\\\"type\\\":\\\"string\\\",\\\"required\\\":true,\\\"pattern\\\":\\\"^\\\\\\\\d{4}-\\\\\\\\d{2}-\\\\\\\\d{2}$\\\"},\\\"endDate\\\":   {\\\"type\\\":\\\"string\\\",\\\"required\\\":true,\\\"pattern\\\":\\\"^\\\\\\\\d{4}-\\\\\\\\d{2}-\\\\\\\\d{2}$\\\"}}\", \n\n  \"maxRows\": 100,\n  \"isLongRunning\": false,\n  \"timeoutSeconds\": 5\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/admin/templates",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "admin",
+            "templates"
+          ]
+        },
+        "description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+      },
+      "response": []
+    },
+    {
+      "name": "update_template",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{adminApiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "// {\r\n//   \"action\": \"queryOrder\",\r\n//   \"accessType\": \"POSTGRES\",\r\n//   \"name\": \"查询订单\",\r\n//   \"description\": \"根据订单号或用户 ID 查询订单。支持状态过滤。\",\r\n//   \"datasourceName\": \"default\",\r\n//   \"sqlTemplate\": \"SELECT order_id, user_id, amount, status, created_at FROM orders WHERE (:orderId::varchar IS NULL OR order_id = :orderId) AND (:userId::varchar IS NULL OR user_id = :userId) AND (:status::varchar IS NULL OR status = :status) ORDER BY created_at DESC\",\r\n//   \"paramSchema\": \"{\\\"orderId\\\":{\\\"type\\\":\\\"string\\\",\\\"maxLength\\\":32,\\\"pattern\\\":\\\"^[A-Z0-9]+$\\\",\\\"description\\\":\\\"订单号\\\"},\\\"userId\\\":{\\\"type\\\":\\\"string\\\",\\\"maxLength\\\":32,\\\"description\\\":\\\"用户 ID\\\"},\\\"status\\\":{\\\"type\\\":\\\"string\\\",\\\"maxLength\\\":20,\\\"description\\\":\\\"订单状态 PAID/REFUNDED/PENDING\\\"}}\",\r\n//   \"maxRows\": 100,\r\n//   \"isLongRunning\": false,\r\n//   \"timeoutSeconds\": 5\r\n// }\r\n\r\n\r\n{\r\n  \"action\": \"getTimeOff\",\r\n  \"accessType\": \"API\",\r\n  \"name\": \"查询请假信息\",\r\n  \"description\": \"根据日期期间查询请假信息。\",\r\n  \"datasourceName\": \"api_basic\",\r\n  \"sqlTemplate\": \"\",\r\n  \"api_path\": \"http://192.168.80.16:8080/uq/us/api/admin-secureforms/en/agent/workforce/timeoff/admin/query?startDate={startDate}&endDate={endDate}\",\r\n  \"api_method\":\"GET\",\r\n  \"api_body_template\":\"{\\\"startDate\\\":\\\"{{startDate}}\\\",\\\"endDate\\\":\\\"{{endDate}}\\\"}\",\r\n  \"paramSchema\": \"{\\\"startDate\\\": {\\\"type\\\":\\\"string\\\",\\\"required\\\":true,\\\"pattern\\\":\\\"^\\\\\\\\d{4}-\\\\\\\\d{2}-\\\\\\\\d{2}$\\\"},\\\"endDate\\\":   {\\\"type\\\":\\\"string\\\",\\\"required\\\":true,\\\"pattern\\\":\\\"^\\\\\\\\d{4}-\\\\\\\\d{2}-\\\\\\\\d{2}$\\\"}}\",\r\n  \"maxRows\": 100,\r\n  \"isLongRunning\": false,\r\n  \"timeoutSeconds\": 5\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/admin/templates/4",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "admin",
+            "templates",
+            "4"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "action_configs",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{adminApiKey}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/admin/tenants/{{tenantId}}/action-configs",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "admin",
+            "tenants",
+            "{{tenantId}}",
+            "action-configs"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create_action_configs",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Successful DELETE request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{adminApiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "// {\r\n//   \"templateId\": \"3\",\r\n//   \"datasourceNameOverride\":\"\",\r\n//   \"customSql\":\"SELECT order_id, user_id, amount, status, created_at FROM orders WHERE (:orderId::varchar IS NULL OR order_id = :orderId) AND (:userId::varchar IS NULL OR user_id = :userId) AND (:amount::numeric IS NULL OR amount = :amount) ORDER BY created_at DESC\",\r\n//   \"customApiPath\":\"\",\r\n//   \"customParams\":\"{ \\\"userId\\\": {\\\"type\\\": \\\"string\\\", \\\"maxLength\\\": 32, \\\"description\\\": \\\"用户 ID\\\"}, \\\"orderId\\\": {\\\"type\\\": \\\"string\\\", \\\"pattern\\\": \\\"^[A-Z0-9]+$\\\", \\\"maxLength\\\": 32, \\\"description\\\": \\\"订单号\\\"},\\\"amount\\\": {\\\"type\\\": \\\"double\\\", \\\"maxLength\\\": 32, \\\"description\\\": \\\"金额\\\"} }\",\r\n//   \"enabled\":true\r\n// }\r\n\r\n\r\n{\r\n  \"templateId\": \"4\",\r\n  \"datasourceNameOverride\":\"\",\r\n  \"customSql\":\"\",\r\n  \"customApiPath\":\"\",\r\n  \"customParams\":\"\",\r\n  \"enabled\":true\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/admin/tenants/{{tenantId}}/actions/getTimeOff/grant",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "admin",
+            "tenants",
+            "{{tenantId}}",
+            "actions",
+            "getTimeOff",
+            "grant"
+          ]
+        },
+        "description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+      },
+      "response": []
+    },
+    {
+      "name": "batch_create_action_configs",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{adminApiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/admin/tenants/{{tenantId}}/actions/grant-all-defaults",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "admin",
+            "tenants",
+            "{{tenantId}}",
+            "actions",
+            "grant-all-defaults"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "health_readiness",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/health/readiness",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "health",
+            "readiness"
+          ]
+        },
+        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+      },
+      "response": []
+    },
+    {
+      "name": "mcp_initialize",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "local-dev-mcp-token-change-in-prod",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json, text/event-stream",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"jsonrpc\":\"2.0\",\r\n    \"id\":1,\r\n    \"method\":\"initialize\",\r\n    \"params\":{\r\n        \"protocolVersion\":\"2025-03-26\",\r\n        \"capabilities\":{},\r\n        \"clientInfo\":{\"name\":\"cli\",\"version\":\"1.0\"}\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/mcp",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "mcp"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "mcp_notifications/initialized",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "local-dev-mcp-token-change-in-prod",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json, text/event-stream",
+            "type": "text"
+          },
+          {
+            "key": "Mcp-Session-Id",
+            "value": "{{sessionId}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"jsonrpc\":\"2.0\",\r\n    \"method\":\"notifications/initialized\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/mcp",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "mcp"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "mcp_message_tools/list",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{mcpToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Tenant-Id",
+            "value": "{{tenantId}}",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json, text/event-stream",
+            "type": "text"
+          },
+          {
+            "key": "Mcp-Session-Id",
+            "value": "{{sessionId}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"jsonrpc\": \"2.0\",\r\n    \"id\": 2,\r\n    \"method\": \"tools/list\",\r\n    \"params\": {}\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/mcp",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "mcp"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "mcp_message_tools/call",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "local-dev-mcp-token-change-in-prod",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Mcp-Session-Id",
+            "value": "{{sessionId}}",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json, text/event-stream",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "// {\r\n//     \"jsonrpc\": \"2.0\",  \r\n//     \"id\": 3,  \r\n//     \"method\": \"tools/call\",  \r\n//     \"params\": {    \r\n//         \"name\": \"queryOrder\",    \r\n//         \"arguments\": {\"tenantId\": \"{{tenantId}}\",      \"requestId\": \"req-7\",      \"userId\": \"U200\" ,\"amount\":250 }  \r\n//     }\r\n// }\r\n\r\n{\r\n    \"jsonrpc\": \"2.0\",  \r\n    \"id\": 3,  \r\n    \"method\": \"tools/call\",  \r\n    \"params\": {    \r\n        \"name\": \"getTimeOff\",    \r\n        \"arguments\": {\"tenantId\": \"{{tenantId}}\", \"startDate\": \"2026-01-01\",      \"requestId\": \"req-2\",      \"endDate\": \"2026-04-30\" }  \r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url_enterprise_connector}}/mcp",
+          "host": [
+            "{{base_url_enterprise_connector}}"
+          ],
+          "path": [
+            "mcp"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "id",
+      "value": "1"
+    },
+    {
+      "key": "base_url",
+      "value": "https://template.postman-echo.com"
+    }
+  ]
+}

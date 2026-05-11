@@ -1,0 +1,56 @@
+# =============================================================================
+# 本机开发 Profile - 启动:
+#   ./mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local
+# 或:
+#   SPRING_PROFILES_ACTIVE=local
+#
+# 目的: 开发者 clone 下来不设任何环境变量也能跑起来 (spring.profiles.default=local, 所以这是默认状态)。
+# 所有 token / secret 都填 dev 占位值, DB/Redis 指 localhost。
+#
+# 切勿复制这些值到 prod 环境!
+# =============================================================================
+server:
+  port: ${SERVER_PORT:8089}
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/sea_star_enterprise_connector}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123456}
+    hikari:
+      maximum-pool-size: 20
+      connection-timeout: 3000
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:2000}
+
+connector:
+  security:
+    # 本地开发用的固定 token, 长度 >= 16 通过 McpController.resolveCaller 校验
+    mcp-token: ${MCP_AUTH_TOKEN:local-dev-mcp-token-change-in-prod}
+    # 求情接口的认证 key, 走 X-API-Key header
+    admin-api-key: ${ADMIN_API_KEY:local-dev-admin-api-key-change-in-prod}
+    # 物理删除 (purge) 端点的二级认证 key, 走 X-Purge-Api-Key header
+    admin-purge-api-key: ${ADMIN_PURGE_API_KEY:local-dev-purge-api-key-DO-NOT-USE-IN-PROD}
+    # Base64(32 bytes) - 必须用 openssl rand -base64 32 生成后通过环境变量 ENCRYPTION_KEY 注入
+    # 占位符 REPLACE_WITH_BASE64_32_BYTES 启动时会因 Base64 解码 + 长度校验失败, 这是故意的:
+    # 强制使用者首次启动前必须自己生成密钥, 不能用任何"开箱即用"的默认值
+    encryption-key: ${ENCRYPTION_KEY:REPLACE_WITH_BASE64_32_BYTES}
+  async:
+    callback:
+      # 允许本地 /internal/callback 接收回调 (调试异步回调链路用)
+      inbound-secret: ${CALLBACK_INBOUND_SECRET:local-dev-callback-secret}
+
+logging:
+  level:
+    root: INFO
+    com.sea.star.ai.ec.enterprise.connector: DEBUG
+    # 开启 SQL 打印方便调试
+    com.baomidou.mybatisplus: DEBUG
+    org.apache.ibatis: DEBUG
+    # Resilience4j 事件日志
+    io.github.resilience4j: INFO

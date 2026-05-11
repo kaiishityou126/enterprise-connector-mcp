@@ -1,0 +1,52 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Claude Code 本机配置 (含本机绝对路径) ###
+.claude/
+
+### 运行时日志 ###
+*.log
+logs/
+
+### 本地环境变量 ###
+.env
+.env.local
+.env.*.local
+
+### 操作系统垃圾 ###
+.DS_Store
+Thumbs.db
+
+### Maven 边角产物 ###
+*.jar.original

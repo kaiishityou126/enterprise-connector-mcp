@@ -1,0 +1,116 @@
+# =============================================================================
+# 主配置 - 所有 profile 共通的基线（不随环境变化的东西）
+#
+# Profile 文件分工 (环境相关配置, 必有):
+#   application-local.yaml   本机开发, 默认激活
+#   application-dev.yaml     团队 dev 环境
+#   application-prod.yaml    生产环境
+# 激活: SPRING_PROFILES_ACTIVE=dev  或  -Dspring-boot.run.profiles=dev
+#
+# 各 profile 必须提供的 key (在 profile yaml 里定义):
+#   server.port
+#   spring.datasource.{url,username,password}
+#   spring.data.redis.{host,port}
+#   connector.security.{mcp-token,admin-api-key,admin-purge-api-key,encryption-key}
+#   connector.async.callback.inbound-secret
+# =============================================================================
+server:
+  shutdown: graceful
+
+spring:
+  application:
+    name: sea_star_enterprise_connector
+  profiles:
+    # 未显式指定 profile 时默认 local (开发友好); dev/prod 必须显式覆盖
+    default: local
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  # ---- 全局 Hikari / JDBC 驱动参数 (所有 profile 共享) ----
+  # stringtype=unspecified: PG JDBC 驱动不显式声明 String 参数类型, 让 PG 自行 infer.
+  # 否则 String → character varying, 无法写 jsonb 列 (param_schema / api_headers 等).
+  # 比在每个 URL 后面手动拼 ?stringtype=unspecified 更干净, 也防 URL 有其他 query 时冲突.
+  datasource:
+    hikari:
+      data-source-properties:
+        stringtype: unspecified
+# Spring AI MCP Server: 走 MCP 2025-03-26 标准的 Streamable HTTP transport.
+# Tool 由 DynamicMcpToolProvider 从 action_template 表动态注册.
+# 关键差异 vs 旧 SSE+HTTP:
+#   - 单端点 POST /mcp (request-response 同步, 不再有 /mcp/sse + /mcp/message 双端点)
+#   - 每次 tools/list 请求都重新调 PerTenantToolCallbackProvider.getToolCallbacks(),
+#     让 X-Tenant-Id 头驱动的 per-session schema 真正生效
+  ai:
+    mcp:
+      server:
+        enabled: true
+        name: enterprise-connector
+        version: 1.0.0
+        type: SYNC
+        protocol: STREAMABLE
+
+# MyBatis-Flex 配置 (全环境统一; 其他高级配置在 config/AutoFillListener 中程序化注册)
+mybatis-flex:
+  global-config:
+    print-banner: false
+
+# ---- 连接器自定义配置 (基础设施基线; 业务可调参数走 sys_dict 字典表) ----
+connector:
+  async:
+    recovery-on-startup: true
+    callback:
+      enabled: true
+  cache:
+    caffeine:
+      expire-after-write-minutes: 30
+      maximum-size: 1000
+    redis:
+      ttl-seconds: 3600
+      invalidation-channel: cache:invalidate
+  datasource-pool:
+    max-tenants: 100
+    per-tenant-max-connections: 5
+
+# ---- 监控 (Phase 5.3) ----
+# 不暴露 /actuator/shutdown 端点: 该端点默认无认证, 暴露后任何网络可达的调用方
+# POST 即可终止 JVM (Critical 安全风险)。进程优雅停机走 server.shutdown: graceful。
+#
+# Prometheus 端点: GET /actuator/prometheus
+# 指标命名空间:
+#   connector.*      自定义业务指标 (ConnectorMetrics)
+#   resilience4j.*   限流 / 熔断 (auto-registered)
+#   http.server.*    Spring Boot HTTP 请求统计 (auto)
+#   jvm.*  /  system.*  JVM / 系统指标 (auto)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: enterprise-connector
+    distribution:
+      # 自动发出 P50/P90/P95/P99 分位数给 Prometheus 查询
+      percentiles-histogram:
+        http.server.requests: true
+        connector.request.duration: true
+      percentiles:
+        http.server.requests: 0.5, 0.9, 0.95, 0.99
+        connector.request.duration: 0.5, 0.9, 0.95, 0.99
+
+# Resilience4j 指标自动上报到 Micrometer (auto, micrometer-registry-prometheus 在 classpath 上)
+resilience4j:
+  ratelimiter:
+    metrics:
+      enabled: true
+  circuitbreaker:
+    metrics:
+      enabled: true

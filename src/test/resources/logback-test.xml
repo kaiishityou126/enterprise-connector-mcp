@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{25} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+      Testcontainers 启动探测策略在 Docker 不通时需要 DEBUG 级别才能看到失败细节。
+      诊断时改成: <logger name="org.testcontainers" level="DEBUG"/>
+    -->
+    <logger name="org.testcontainers" level="INFO"/>
+    <logger name="com.github.dockerjava" level="WARN"/>
+
+    <root level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

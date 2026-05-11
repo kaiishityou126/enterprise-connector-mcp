@@ -1,0 +1,82 @@
+# =============================================================================
+# 生产环境 Profile - 部署时必须显式激活:
+#   SPRING_PROFILES_ACTIVE=prod
+#
+# 核心原则:
+#   1. 所有敏感字段无默认值, 缺失即启动失败 (fail-fast)
+#   2. 所有主机/端口走环境变量或配置中心注入, yaml 不留明文
+#   3. 资源参数 (连接池/日志级别) 按生产流量规模调优, 覆盖主 yaml 的基线值
+#   4. 日志最小化 (WARN), 不打 SQL / 不打请求细节
+#
+# 部署者必须通过环境变量 / K8s Secret / 配置中心提供:
+#   DB_URL, DB_USERNAME, DB_PASSWORD
+#   REDIS_HOST, REDIS_PORT, REDIS_PASSWORD
+#   MCP_AUTH_TOKEN, ADMIN_API_KEY, ENCRYPTION_KEY, CALLBACK_INBOUND_SECRET
+# =============================================================================
+server:
+  port: ${SERVER_PORT:8089}
+  # 生产建议关闭 error 栈返回给客户端; 由全局异常处理统一响应
+  error:
+    include-stacktrace: never
+    include-message: never
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      # 生产推荐规模: 按应用实例数 * pool size 不超过 DB max_connections 的 60% 来配
+      maximum-pool-size: ${DB_POOL_MAX:50}
+      minimum-idle: ${DB_POOL_MIN:5}
+      connection-timeout: 3000
+      # 连接空闲 10min 回收, 避免长期持有僵死连接
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      # 开启泄漏探测, 借用 > 30s 未归还则打印堆栈
+      leak-detection-threshold: 30000
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      lettuce:
+        pool:
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+      timeout: 2000
+
+# 生产关闭 OpenAPI / Swagger UI: 避免泄露 Admin API 端点结构 (含 /purge 等高危路径)
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+connector:
+  security:
+    mcp-token: ${MCP_AUTH_TOKEN}
+    admin-api-key: ${ADMIN_API_KEY}
+    # 物理删端点的二级认证, 应和 admin-api-key 分开, 只给少数人
+    admin-purge-api-key: ${ADMIN_PURGE_API_KEY}
+    encryption-key: ${ENCRYPTION_KEY}
+  async:
+    callback:
+      inbound-secret: ${CALLBACK_INBOUND_SECRET}
+  datasource-pool:
+    # 生产租户更多 / 每租户并发更高, 覆盖主 yaml 基线
+    max-tenants: ${TENANT_POOL_MAX:500}
+    per-tenant-max-connections: ${TENANT_POOL_PER:10}
+
+# 生产日志: 最小化且结构化, 方便 ELK/Loki 采集
+logging:
+  level:
+    root: WARN
+    com.sea.star.ai.ec.enterprise.connector: INFO
+    # MyBatis 只打错误
+    com.baomidou.mybatisplus: WARN
+    org.apache.ibatis: WARN
+    # Resilience4j 事件可观测 (熔断/限流触发要看到)
+    io.github.resilience4j: INFO

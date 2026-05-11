@@ -1,0 +1,92 @@
+# =============================================================================
+# 一键本地开发环境 (Phase 5.7)
+#   docker compose up -d     启动 PG + Redis + App
+#   docker compose logs -f   查看日志
+#   docker compose down      停止 (graceful shutdown, 最多等 30s)
+#   docker compose down -v   停止并清理数据卷
+#
+# 端口映射:
+#   8089 → app HTTP (健康检查 / Admin API / MCP)
+#   5432 → PostgreSQL
+#   6379 → Redis
+#
+# 数据持久化: postgres_data / redis_data 命名卷
+# 首次启动时 PG 会自动执行 sql/ 下的所有初始化脚本 (按文件名顺序)
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ec-postgres
+    environment:
+      POSTGRES_DB: sea_star_ai
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # sql/ 下的 *.sql 文件会在首次启动时按字典序自动执行
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sea_star_ai"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: ec-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ec-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # 使用 dev profile 而不是 prod: 本地跑 compose 时方便调试
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: "8089"
+      # 走容器内网络, 服务名即主机名
+      DB_URL: jdbc:postgresql://postgres:5432/sea_star_ai
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-123456}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      # 演示用密钥, 生产环境必须用 K8s Secret / Vault 注入真实值
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-dev-mcp-token-change-me-1234567890}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-dev-admin-key-change-me-1234567890}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-ZGV2ZGV2ZGV2ZGV2ZGV2ZGV2ZGV2ZGV2ZGV2ZGV2ZGU=}
+      CALLBACK_INBOUND_SECRET: ${CALLBACK_INBOUND_SECRET:-dev-callback-secret-change-me}
+      JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+    ports:
+      - "8089:8089"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8089/health/liveness"]
+      interval: 15s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

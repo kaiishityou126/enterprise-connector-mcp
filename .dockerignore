@@ -1,0 +1,24 @@
+# Exclude from Docker build context (加速 build + 避免本地 target 污染镜像)
+target/
+.idea/
+.vscode/
+.github/
+.claude/
+docs/
+*.md
+HELP.md
+
+# Local-only files
+.env
+.env.*
+application-local.yaml
+# 注意: dev/prod yaml 需要保留, 运行时按 profile 激活
+
+# Maven build temp
+*.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+
+# IDE
+*.iml
+*.swp
+.DS_Store

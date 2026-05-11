@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  日志配置 (Phase 5.1 + 5.2)
+  分 profile 输出:
+    local / dev  - 控制台 + 人读友好格式, traceId/tenantId 内嵌
+    prod         - JSON 格式到 stdout, 外部 ELK/Loki 采集
+  所有 profile 共用 %mask (MaskingConverter) 做敏感字段脱敏。
+-->
+<configuration>
+
+  <!-- Spring Boot 的默认 include, 提供 %clr 彩色输出等 -->
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+  <!-- 注册自定义转换器: 输出前对敏感字段做掩码 -->
+  <conversionRule conversionWord="mask"
+                  class="com.sea.star.ai.ec.enterprise.connector.infrastructure.logging.MaskingConverter"/>
+  <!-- 兼容旧版 Logback 属性名 -->
+  <conversionRule conversionWord="maskMsg"
+                  class="com.sea.star.ai.ec.enterprise.connector.infrastructure.logging.MaskingConverter"/>
+
+  <!-- 控制台人读格式: 时间 级别 [trace|tenant] 线程 类 - 消息 -->
+  <property name="CONSOLE_PATTERN"
+            value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%X{traceId:-}|%X{tenantId:-}]){magenta} %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %mask%n"/>
+
+  <!-- local / dev: 控制台人读 -->
+  <springProfile name="local,dev">
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>${CONSOLE_PATTERN}</pattern>
+      </encoder>
+    </appender>
+
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+    <logger name="com.sea.star.ai.ec.enterprise.connector" level="DEBUG"/>
+  </springProfile>
+
+  <!-- prod: JSON 结构化, stdout 直出, 适配容器日志采集 -->
+  <springProfile name="prod">
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+        <providers>
+          <timestamp>
+            <fieldName>timestamp</fieldName>
+            <timeZone>UTC</timeZone>
+            <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSX</pattern>
+          </timestamp>
+          <logLevel><fieldName>level</fieldName></logLevel>
+          <loggerName>
+            <fieldName>logger</fieldName>
+            <shortenedLoggerNameLength>40</shortenedLoggerNameLength>
+          </loggerName>
+          <threadName><fieldName>thread</fieldName></threadName>
+          <mdc/>  <!-- 自动平铺 traceId / tenantId / 其他 MDC key -->
+          <pattern>
+            <!-- 经过 MaskingConverter 脱敏的消息 -->
+            <pattern>{"message":"%mask"}</pattern>
+          </pattern>
+          <stackTrace>
+            <fieldName>stack</fieldName>
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+              <maxDepthPerThrowable>30</maxDepthPerThrowable>
+              <maxLength>4096</maxLength>
+              <rootCauseFirst>true</rootCauseFirst>
+            </throwableConverter>
+          </stackTrace>
+        </providers>
+      </encoder>
+    </appender>
+
+    <root level="INFO">
+      <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+    <!-- 生产屏蔽噪音 -->
+    <logger name="org.apache.ibatis" level="WARN"/>
+    <logger name="org.mybatis" level="WARN"/>
+    <logger name="com.mybatisflex" level="WARN"/>
+  </springProfile>
+
+  <!-- 未指定 profile 时兜底: 同 local -->
+  <springProfile name="!local &amp; !dev &amp; !prod">
+    <appender name="DEFAULT_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder><pattern>${CONSOLE_PATTERN}</pattern></encoder>
+    </appender>
+    <root level="INFO">
+      <appender-ref ref="DEFAULT_CONSOLE"/>
+    </root>
+  </springProfile>
+
+</configuration>
