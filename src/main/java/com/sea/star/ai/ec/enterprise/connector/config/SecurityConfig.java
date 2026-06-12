@@ -18,6 +18,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  *
  * 不使用 spring-boot-starter-security 的原因: 当前场景只需要简单头部校验, Spring Security
  * 过于重量且对 MCP 这种 JSON-RPC over HTTP 协议没有额外价值。
+ *
+ * Boot 启动时若 classpath 上偶发出现 spring-security-core/crypto (传递依赖), Boot 会触发
+ * SecurityAutoConfiguration → 默认拦截所有请求返 401 (WWW-Authenticate: Bearer).
+ * 通过 application.yaml 的 spring.autoconfigure.exclude 排除这些自动配置, 让 AuthInterceptor
+ * 仍是唯一的鉴权层.
  */
 @Configuration
 @RequiredArgsConstructor
