@@ -2,6 +2,7 @@ package com.sea.star.ai.ec.enterprise.connector.controller;
 
 import static com.sea.star.ai.ec.enterprise.connector.domain.model.table.ActionTemplateTableDef.ACTION_TEMPLATE;
 
+import com.mybatisflex.core.logicdelete.LogicDeleteManager;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.sea.star.ai.ec.enterprise.connector.domain.dto.TemplateCreateRequest;
@@ -35,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 操作模板管理 API. 由 DBA / 运维团队维护预审 SQL / API 模板, 商户通过 tenant_action_config 引用.
  *
  * 路径设计:
- *   GET     /admin/templates                     分页列表 (支持 action/accessType/enabled 过滤)
+ *   GET     /admin/templates                     分页列表 (支持 action/accessType/enabled 过滤; ?deleted=true 只查已软删记录)
  *   GET     /admin/templates/{templateId}        查单条
  *   POST    /admin/templates                     创建
  *   PUT     /admin/templates/{templateId}        PATCH 更新 (只覆盖非 null 字段)
@@ -62,7 +63,8 @@ public class AdminTemplateController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) AccessType accessType,
             @RequestParam(required = false) String action,
-            @RequestParam(required = false) Boolean enabled) {
+            @RequestParam(required = false) Boolean enabled,
+            @RequestParam(defaultValue = "false") boolean deleted) {
         int safePage = Math.max(1, page);
         int safeSize = Math.clamp((long) size, 1, MAX_PAGE_SIZE);
 
@@ -72,6 +74,14 @@ public class AdminTemplateController {
         if (accessType != null) qw.where(ACTION_TEMPLATE.ACCESS_TYPE.eq(accessType));
         if (action != null && !action.isBlank()) qw.where(ACTION_TEMPLATE.ACTION.eq(action));
         if (enabled != null) qw.where(ACTION_TEMPLATE.ENABLED.eq(enabled));
+
+        // deleted=true: 只查已软删记录, 显式过滤 deleted=true 并绕开 Flex 自动加的 deleted=false
+        if (deleted) {
+            qw.where(ACTION_TEMPLATE.DELETED.eq(Boolean.TRUE));
+            Page<ActionTemplate> deletedPage = LogicDeleteManager.execWithoutLogicDelete(
+                    () -> actionTemplateMapper.paginate(safePage, safeSize, qw));
+            return UnifiedResult.ok(deletedPage);
+        }
 
         Page<ActionTemplate> result = actionTemplateMapper.paginate(safePage, safeSize, qw);
         return UnifiedResult.ok(result);

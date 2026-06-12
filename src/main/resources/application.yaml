@@ -21,10 +21,17 @@ spring:
   application:
     name: sea_star_enterprise_connector
   profiles:
-    # 未显式指定 profile 时默认 local (开发友好); dev/prod 必须显式覆盖
-    default: local
+    active: ${SPRING_PROFILES_ACTIVE:local}
   lifecycle:
     timeout-per-shutdown-phase: 30s
+  # spring-ai-starter-mcp-server-webmvc 传递依赖会拉入 spring-security-core/crypto;
+  # Boot 在 classpath 上发现 security 类就触发 SecurityAutoConfiguration → 默认拦截所有请求
+  # 返 401 (WWW-Authenticate: Bearer). 排除掉, 让 AuthInterceptor 仍是唯一鉴权层.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
   # ---- 全局 Hikari / JDBC 驱动参数 (所有 profile 共享) ----
   # stringtype=unspecified: PG JDBC 驱动不显式声明 String 参数类型, 让 PG 自行 infer.
   # 否则 String → character varying, 无法写 jsonb 列 (param_schema / api_headers 等).
