@@ -154,6 +154,8 @@
 
 ### 一键起依赖 + 应用
 
+**Linux / macOS / WSL2 / Git Bash:**
+
 ```bash
 # 1. 启 PG + Redis
 docker compose up -d
@@ -173,11 +175,65 @@ export ENCRYPTION_KEY=$(openssl rand -base64 32)  # AES-256, 必须 32 字节
 export JAVA_HOME="/path/to/jdk-21"
 export PATH="$JAVA_HOME/bin:$PATH"
 
-# 5. 启动
-./mvnw spring-boot:run
+# 5. 编译 + 启动（clean 顶掉 IDE 可能残留的半成品 class，确保 APT 重新生成 TableDef）
+./mvnw clean compile spring-boot:run
 ```
 
+**Windows · PowerShell**（`openssl` 来自 Git for Windows）:
+
+```powershell
+# 1. 启 PG + Redis
+docker compose up -d
+
+# 2. 加载 DDL + 种子字典
+psql -h localhost -U postgres -f sql/01_create_tables.sql
+psql -h localhost -U postgres -f sql/04_seed_dict.sql
+
+# 3. 设环境变量（仅当前窗口生效）
+$env:DB_PASSWORD    = "postgres"
+$env:REDIS_HOST     = "localhost"
+$env:MCP_AUTH_TOKEN = (openssl rand -base64 32)
+$env:ADMIN_API_KEY  = (openssl rand -base64 32)
+$env:ENCRYPTION_KEY = (openssl rand -base64 32)   # AES-256, 必须 32 字节
+
+# 4. JDK 21
+$env:JAVA_HOME = "D:\soft\java\jdk-21.0.2"
+$env:PATH      = "$env:JAVA_HOME\bin;$env:PATH"
+
+# 5. 编译 + 启动（clean 顶掉 IDE 残留的半成品 class；.\mvnw.cmd 在 cmd 和 PowerShell 下都能跑）
+.\mvnw.cmd clean compile spring-boot:run
+```
+
+**Windows · cmd**（`openssl` 来自 Git for Windows；`for /f` 为交互式命令行写法，写进 .bat 需把 `%i` 改成 `%%i`）:
+
+```bat
+rem 1. 启 PG + Redis
+docker compose up -d
+
+rem 2. 加载 DDL + 种子字典
+psql -h localhost -U postgres -f sql/01_create_tables.sql
+psql -h localhost -U postgres -f sql/04_seed_dict.sql
+
+rem 3. 设环境变量（仅当前窗口生效）
+set DB_PASSWORD=postgres
+set REDIS_HOST=localhost
+for /f "delims=" %i in ('openssl rand -base64 32') do set MCP_AUTH_TOKEN=%i
+for /f "delims=" %i in ('openssl rand -base64 32') do set ADMIN_API_KEY=%i
+for /f "delims=" %i in ('openssl rand -base64 32') do set ENCRYPTION_KEY=%i
+
+rem 4. JDK 21
+set JAVA_HOME=D:\soft\java\jdk-21.0.2
+set PATH=%JAVA_HOME%\bin;%PATH%
+
+rem 5. 编译 + 启动（clean 顶掉 IDE 残留的半成品 class）
+.\mvnw.cmd clean compile spring-boot:run
+```
+
+> 💡 **为什么启动前要 `clean compile`**：用 VSCode / Eclipse 打开过项目时，IDE 的编译器(ECJ)可能在 MyBatis-Flex APT 没生成 TableDef 的情况下，往 `target/classes` 编进半成品 class。`spring-boot:run` 不重新编译、直接加载它们，会在启动时抛 `java.lang.Error: Unresolved compilation problems: XXX cannot be resolved`。先 `mvn clean compile` 让 javac 跑一遍 APT 重新生成 TableDef，即可避免。
+
 ### 跑测试
+
+**Linux / macOS / WSL2 / Git Bash:**
 
 ```bash
 # 全量（需 Docker）
@@ -189,6 +245,12 @@ export PATH="$JAVA_HOME/bin:$PATH"
 # 只 IT
 ./mvnw test -Dtest='*IntegrationTest'
 ```
+
+**Windows（cmd / PowerShell 通用）** —— `.\mvnw.cmd` 两边都能跑，`-Dtest` 用双引号包整段（cmd 不会剥单引号）:
+
+- 全量（需 Docker）：`.\mvnw.cmd test`
+- 只单测：`.\mvnw.cmd test "-Dtest=!*IntegrationTest"`
+- 只 IT：`.\mvnw.cmd test "-Dtest=*IntegrationTest"`
 
 > ⚠️ Windows Docker Desktop 4.70 跑不了 IT（CLI-auth 代理问题），请在 WSL2 / Linux / macOS / CI 上跑。详见 [CLAUDE.md](CLAUDE.md) "集成测试"章节。
 
