@@ -10,7 +10,7 @@
 # 切勿复制这些值到 prod 环境!
 # =============================================================================
 server:
-  port: ${SERVER_PORT:8089}
+  port: ${SERVER_PORT:8080}
 
 spring:
   datasource:
@@ -39,7 +39,7 @@ connector:
     # Base64(32 bytes) - 必须用 openssl rand -base64 32 生成后通过环境变量 ENCRYPTION_KEY 注入
     # 占位符 REPLACE_WITH_BASE64_32_BYTES 启动时会因 Base64 解码 + 长度校验失败, 这是故意的:
     # 强制使用者首次启动前必须自己生成密钥, 不能用任何"开箱即用"的默认值
-    encryption-key: ${ENCRYPTION_KEY:REPLACE_WITH_BASE64_32_BYTES}
+    encryption-key: ${ENCRYPTION_KEY:SnP1ocCyAPiJT6Iqx/QVJlN1j1hzaOQJTrWcPtKSDqU=}
   async:
     callback:
       # 允许本地 /internal/callback 接收回调 (调试异步回调链路用)
