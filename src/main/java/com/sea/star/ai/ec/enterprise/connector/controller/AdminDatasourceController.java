@@ -1,5 +1,9 @@
 package com.sea.star.ai.ec.enterprise.connector.controller;
 
+import static com.sea.star.ai.ec.enterprise.connector.domain.model.table.TenantDatasourceTableDef.TENANT_DATASOURCE;
+
+import com.mybatisflex.core.logicdelete.LogicDeleteManager;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.sea.star.ai.ec.enterprise.connector.domain.dto.TenantDatasourceCreateRequest;
 import com.sea.star.ai.ec.enterprise.connector.domain.dto.TenantDatasourceUpdateRequest;
 import com.sea.star.ai.ec.enterprise.connector.domain.mapper.TenantDatasourceMapper;
@@ -20,13 +24,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 租户数据源管理 API. 一个租户可挂多个数据源 (订单库 / 库存库 / CRM API 等), 按逻辑 ds_name 寻址.
  *
  * 路径设计:
- *   GET     /admin/datasources/{tid}                   列出该租户所有数据源
+ *   GET     /admin/datasources/{tid}                   列出该租户所有数据源 (?deleted=true 只查已软删记录)
  *   GET     /admin/datasources/{tid}/{dsName}          查单条
  *   POST    /admin/datasources/{tid}/{dsName}          创建 (body 传明文密码, 服务端加密)
  *   PUT     /admin/datasources/{tid}/{dsName}          PATCH 更新 (只覆盖非 null 字段)
@@ -49,7 +54,19 @@ public class AdminDatasourceController {
     private final EncryptionUtils encryptionUtils;
 
     @GetMapping("/{tid}")
-    public UnifiedResult listByTenant(@PathVariable String tid) {
+    public UnifiedResult listByTenant(@PathVariable String tid,
+                                      @RequestParam(defaultValue = "false") boolean deleted) {
+        // deleted=true: 回收站视图, 只查已软删数据源。不走 requireExists ——
+        // 租户本身可能也被软删, 但其下属的已删数据源仍应可见。
+        if (deleted) {
+            List<TenantDatasource> deletedList = LogicDeleteManager.execWithoutLogicDelete(
+                    () -> datasourceMapper.selectListByQuery(QueryWrapper.create()
+                            .where(TENANT_DATASOURCE.TENANT_ID.eq(tid))
+                            .and(TENANT_DATASOURCE.DELETED.eq(Boolean.TRUE))));
+            deletedList.forEach(this::scrubSensitive);
+            return UnifiedResult.ok(deletedList);
+        }
+
         tenantStatusGuard.requireExists(tid);
         List<TenantDatasource> list = datasourceService.listByTenant(tid);
         list.forEach(this::scrubSensitive);

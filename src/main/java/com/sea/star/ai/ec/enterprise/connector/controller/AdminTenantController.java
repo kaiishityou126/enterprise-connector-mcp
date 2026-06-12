@@ -2,6 +2,7 @@ package com.sea.star.ai.ec.enterprise.connector.controller;
 
 import static com.sea.star.ai.ec.enterprise.connector.domain.model.table.TenantConfigTableDef.TENANT_CONFIG;
 
+import com.mybatisflex.core.logicdelete.LogicDeleteManager;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.sea.star.ai.ec.enterprise.connector.domain.dto.TenantConfigCreateRequest;
@@ -28,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 租户管理 API. 只管租户身份和租户级策略 (QPS / enabled / tier), 数据源和授权分开走子资源接口.
  *
  * 路径设计:
- *   GET     /admin/tenants                      分页列表 (支持 enabled 过滤)
+ *   GET     /admin/tenants                      分页列表 (支持 enabled 过滤; ?deleted=true 只查已软删记录)
  *   GET     /admin/tenants/{tenantId}           查单个
  *   POST    /admin/tenants                      创建
  *   PUT     /admin/tenants/{tenantId}           PATCH 更新 (只覆盖非 null 字段, 含 enabled 禁用/启用)
@@ -56,12 +57,21 @@ public class AdminTenantController {
     public UnifiedResult list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) Boolean enabled) {
+            @RequestParam(required = false) Boolean enabled,
+            @RequestParam(defaultValue = "false") boolean deleted) {
         int safePage = Math.max(1, page);
         int safeSize = Math.clamp((long) size, 1, MAX_PAGE_SIZE);
 
         QueryWrapper qw = QueryWrapper.create().orderBy(TENANT_CONFIG.TENANT_ID.asc());
         if (enabled != null) qw.where(TENANT_CONFIG.ENABLED.eq(enabled));
+
+        // deleted=true: 只查已软删记录, 显式过滤 deleted=true 并绕开 Flex 自动加的 deleted=false
+        if (deleted) {
+            qw.where(TENANT_CONFIG.DELETED.eq(Boolean.TRUE));
+            Page<TenantConfig> deletedPage = LogicDeleteManager.execWithoutLogicDelete(
+                    () -> tenantConfigMapper.paginate(safePage, safeSize, qw));
+            return UnifiedResult.ok(deletedPage);
+        }
 
         Page<TenantConfig> pageResult = tenantConfigMapper.paginate(safePage, safeSize, qw);
         return UnifiedResult.ok(pageResult);
